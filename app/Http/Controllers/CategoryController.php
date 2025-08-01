@@ -2,96 +2,71 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 
 class CategoryController extends Controller
 {
-    private $apiUrl = 'http://127.0.0.1:5000/api/categories';
-
-    /**
-     * Display a listing of the categories.
-     */
     public function index()
     {
-        $response = Http::get($this->apiUrl);
-        $categories = $response->json();
+        $categories = Category::all();
         return view('categories.index', compact('categories'));
     }
 
-    /**
-     * Show the form for creating a new category.
-     */
     public function create()
     {
         return view('categories.create');
     }
 
-    /**
-     * Store a newly created category in the API.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
         ]);
 
-        $response = Http::post($this->apiUrl, $validated);
+        Category::create($validated);
 
-        if ($response->successful()) {
-            $newCategory = $response->json();
-            return redirect()->route('categories.index')
-                ->with('success', 'Category created at: ' . $newCategory['created_at']);
+        return redirect()->route('categories.index')->with('success', 'Category created successfully.');
+    }
+
+    public function edit($id)
+    {
+        $category = Category::find($id);
+
+        if (!$category) {
+            return redirect()->route('categories.index')->with('error', 'Category not found');
         }
 
-        return back()->with('error', 'Failed to create category.')->withInput();
+        return view('categories.edit', compact('category'));
     }
 
-    /**
-     * Show the form for editing the specified category.
-     */
-    public function edit($id)
-{
-    $response = Http::get("{$this->apiUrl}/$id");
-
-    if ($response->failed()) {
-        return redirect()->route('categories.index')->with('error', 'Category not found');
-    }
-
-    $category = (object) $response->json(); // Cast to object for Blade ease
-    return view('categories.edit', compact('category'));
-}
-
-
-
-    /**
-     * Update the specified category in the API.
-     */
-     public function update(Request $request, $id)
+    public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255'
+            'name' => 'required|string|max:255',
         ]);
 
-        $response = Http::put("{$this->apiUrl}/$id", $validated);
+        $category = Category::find($id);
 
-        if ($response->successful()) {
-            return redirect()->route('categories.index')->with('success', 'Category updated successfully');
+        if (!$category) {
+            return redirect()->route('categories.index')->with('error', 'Category not found');
         }
 
-        return back()->withErrors(['api_error' => 'Update failed']);
+        $category->update($validated);
+
+        return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
     }
 
-    /**
-     * Remove the specified category from the API.
-     */
     public function destroy($id)
     {
-        $response = Http::delete("{$this->apiUrl}/$id");
+        $category = Category::find($id);
 
-        return redirect()->route('categories.index')->with(
-            $response->successful() ? 'success' : 'error',
-            $response->successful() ? 'Category deleted successfully.' : 'Failed to delete category.'
-        );
+        if (!$category) {
+            return redirect()->route('categories.index')->with('error', 'Category not found');
+        }
+
+        $category->delete();
+
+        return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
     }
 }
