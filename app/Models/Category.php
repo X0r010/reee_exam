@@ -10,5 +10,5 @@ class Category extends Model
     use HasFactory;
 
     // Allow mass assignment for 'name' field
-    protected $fillable = ['name', 'id', 'created_at', 'updated_at'];
+    protected $fillable = ['id', 'name', 'created_at', 'updated_at'];
 }
